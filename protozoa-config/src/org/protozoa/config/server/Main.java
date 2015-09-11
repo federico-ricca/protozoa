@@ -13,9 +13,14 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  ***************************************************************************/
-package org.protozoa.config;
+package org.protozoa.config.server;
 
 import java.io.IOException;
+
+import org.protozoa.config.Configuration;
+import org.protozoa.config.ConfigurationException;
+import org.protozoa.config.ConfigurationLoader;
+import org.protozoa.config.ConfigurationServer;
 
 public class Main {
 	private final int iPort = 9595;
