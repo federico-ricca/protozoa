@@ -13,8 +13,7 @@ hs_err_pid*
 
 .project
 **/.settings/
-.settings
 
-*/target/
+**/target/
 **/.classpath
 
