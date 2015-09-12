@@ -54,34 +54,33 @@ public class CachedConfigurationManager implements ConfigurationManager {
 	}
 
 	@Override
-	public Collection<String> getStringList(String _path) {
+	public final Collection<String> getStringList(String _path) {
 		return ConfigurationHelper.parseAsStringCollection(configuration
 				.get(_path));
 	}
 
 	@Override
-	public Collection<Long> getLongList(String _path) {
+	public final Collection<Long> getLongList(String _path) {
 		return ConfigurationHelper.parseAsLongCollection(configuration
 				.get(_path));
 	}
 
 	@Override
-	public int getInt(String _path) {
+	public final int getInt(String _path) {
 		return Integer.parseInt(configuration.get(_path));
 	}
 
 	@Override
-	public long getLong(String _path) {
+	public final long getLong(String _path) {
 		return Long.parseLong(configuration.get(_path));
 	}
 
 	@Override
-	public String getString(String _path) {
+	public final String getString(String _path) {
 		return configuration.get(_path);
 	}
 
-	public Configuration getConfiguration() {
+	public final Configuration getConfiguration() {
 		return configuration;
 	}
-
 }
