@@ -12,7 +12,10 @@
 	<description>Protozoa toolset for software prototyping</description>
 
 	<modules>
-		<module>protozoa-config</module>
+        <module>protozoa-config</module>
+        
+        <module>protozoa-pipeline</module>
+        <module>protozoa-metrics</module>
 	</modules>
 
 	<properties>
