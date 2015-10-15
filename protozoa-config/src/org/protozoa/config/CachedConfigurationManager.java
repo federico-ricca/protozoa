@@ -66,13 +66,25 @@ public class CachedConfigurationManager implements ConfigurationManager {
 	}
 
 	@Override
-	public final int getInt(String _path) {
-		return Integer.parseInt(configuration.get(_path));
+	public final Integer getInt(String _path) {
+		String _value = configuration.get(_path);
+
+		if (_value != null) {
+			return Integer.parseInt(_value);
+		}
+
+		return null;
 	}
 
 	@Override
-	public final long getLong(String _path) {
-		return Long.parseLong(configuration.get(_path));
+	public final Long getLong(String _path) {
+		String _value = configuration.get(_path);
+		
+		if (_value != null) {
+			return Long.parseLong(_value);
+		}
+		
+		return null;
 	}
 
 	@Override

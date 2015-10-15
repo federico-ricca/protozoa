@@ -25,9 +25,9 @@ public interface ConfigurationManager {
 
 	public Collection<Long> getLongList(String _path);
 
-	public int getInt(String _path);
+	public Integer getInt(String _path);
 	
-	public long getLong(String _path);
+	public Long getLong(String _path);
 	
 	public String getString(String _path);
 }
