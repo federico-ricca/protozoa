@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.protozoa</groupId>
     <artifactId>protozoa</artifactId>
-    <version>1.0</version>
+    <version>v0.1-alpha</version>
   </parent>
   <artifactId>protozoa-pipeline</artifactId>
   <name>protozoa-pipeline</name>
