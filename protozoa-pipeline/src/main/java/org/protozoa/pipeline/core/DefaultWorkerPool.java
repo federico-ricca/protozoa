@@ -7,18 +7,34 @@ import java.util.concurrent.TimeUnit;
 public class DefaultWorkerPool implements WorkerPool {
 	private ExecutorService executorService;
 
+	class NodeWorker implements Runnable {
+		private PipelineNode node;
+		private DataUnit[] data;
+
+		public NodeWorker(PipelineNode _node, DataUnit[] _data) {
+			node = _node;
+			data = _data;
+		}
+
+		@Override
+		public void run() {
+			node.consume(data);
+		}
+
+	}
+
 	@Override
-	public void setSize(int _size) {
+	public void start(int _size) {
 		executorService = Executors.newScheduledThreadPool(_size);
 	}
 
 	@Override
 	public void submitWork(PipelineNode _node, DataUnit[] _data) {
-		executorService.submit(new Worker(_node, _data));
+		executorService.submit(new NodeWorker(_node, _data));
 	}
 
 	@Override
-	public void join(long _timeout) {
+	public void shutdown(long _timeout) {
 		executorService.shutdown();
 
 		try {

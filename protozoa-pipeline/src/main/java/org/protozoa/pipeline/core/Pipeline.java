@@ -14,16 +14,15 @@ public class Pipeline {
 	}
 
 	public void start() {
-		workerPool = new DefaultWorkerPool();
+		workerPool = new CustomWorkerPool(-1);
 
-		workerPool.setSize(initialNodes.size());
+		workerPool.start(initialNodes.size());
 
 		while (input.available()) {
 			DataUnit[] _data = input.fetch();
 
 			int _index = 0;
 			int _partitionSize = _data.length / initialNodes.size();
-			System.out.println("partition size=" + _partitionSize);
 
 			for (PipelineNode _node : initialNodes) {
 				DataUnit[] _tempData = Arrays
@@ -37,7 +36,6 @@ public class Pipeline {
 
 				_index += _partitionSize;
 
-				System.out.println("submitting worker " + _tempData.length);
 				workerPool.submitWork(_node, _tempData);
 			}
 		}
@@ -71,12 +69,12 @@ public class Pipeline {
 		initialNodes.add(_node);
 	}
 
-	public void join(long _waitTime) throws InterruptedException {
+	public void shutdown(long _waitTime) throws InterruptedException {
 		if (workerPool == null) {
 			return;
 		}
 
-		workerPool.join(_waitTime);
+		workerPool.shutdown(_waitTime);
 	}
 
 }

@@ -2,20 +2,23 @@ package org.protozoa.pipeline.core;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.junit.Test;
 
 public class WorkerPoolTests {
-	public static final int DATA_SIZE = 10;
+	public static final int DATA_SIZE = 100;
+	public static final int CHUNK_SIZE = 20;
 
 	class ElementCounter {
-		private int count = 0;
+		private AtomicInteger count = new AtomicInteger(0);
 
 		public final void inc() {
-			count++;
+			count.incrementAndGet();
 		}
 
 		public int getElementCount() {
-			return count;
+			return count.get();
 		}
 	}
 
@@ -23,12 +26,10 @@ public class WorkerPoolTests {
 	public void testWorkerPool() {
 		final ElementCounter _counter = new ElementCounter();
 
-		WorkerPool _pool = new CustomWorkerPool(50000);
-		//WorkerPool _pool = new SequentialWorkerPool();
+		//WorkerPool _pool = new CustomWorkerPool(-1);
+		WorkerPool _pool = new SequentialWorkerPool();
 
-		_pool.setSize(50);
-
-		long _start = System.currentTimeMillis();
+		_pool.start(10);
 		
 		for (int i = 0; i < DATA_SIZE; i++) {
 			PipelineNode _node = new PipelineNode(new Processor() {
@@ -37,7 +38,7 @@ public class WorkerPoolTests {
 				public DataUnit[] process(DataUnit[] _source) {
 					for (DataUnit _item : _source) {
 						try {
-							Thread.sleep(20);
+							Thread.sleep(10);
 						} catch (InterruptedException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -48,14 +49,12 @@ public class WorkerPoolTests {
 				}
 			});
 
-			DataUnit[] _data = new DataUnit[DATA_SIZE];
+			DataUnit[] _data = new DataUnit[CHUNK_SIZE];
 			_pool.submitWork(_node, _data);
 		}
 
-		_pool.join(60000);
+		_pool.shutdown(6000);
 
-		System.out.println("Elapsed: " + (System.currentTimeMillis()-_start));
-
-		assertEquals(DATA_SIZE * DATA_SIZE, _counter.getElementCount());
+		assertEquals(DATA_SIZE * CHUNK_SIZE, _counter.getElementCount());
 	}
 }

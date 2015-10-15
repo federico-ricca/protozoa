@@ -1,25 +1,60 @@
 package org.protozoa.pipeline.core;
 
-class Worker implements Runnable {
-	private PipelineNode node;
-	private DataUnit[] data;
-	private WorkerCallback callback;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
-	public Worker(PipelineNode _node, DataUnit[] _data) {
-		node = _node;
-		data = _data;
+class Worker implements Runnable {
+	private AtomicBoolean locked;
+	private AtomicBoolean running;
+	private AtomicReference<WorkUnit> unit;
+
+	public Worker() {
+		locked = new AtomicBoolean(false);
+		running = new AtomicBoolean(false);
+		unit = new AtomicReference<WorkUnit>(null);
 	}
 
-	public void setCallback(WorkerCallback _callback) {
-		callback = _callback;
+	public void process(WorkUnit _workUnit) {
+		unit.compareAndSet(null, _workUnit);
+	}
+
+	public boolean isLocked() {
+		return locked.get();
+	}
+
+	public boolean lock() {
+		return locked.compareAndSet(false, true);
 	}
 
 	@Override
 	public void run() {
-		node.consume(data);
+		running.set(true);
+		
+		while (running.get()) {
 
-		if (callback != null) {
-			callback.signal();
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			if (unit.get() != null) {
+				PipelineNode _node = unit.get().getNode();
+				DataUnit[] _data = unit.get().getData();
+
+				_node.consume(_data);
+
+				unit.set(null);
+				locked.set(false);
+			}
 		}
+	}
+
+	public void shutdown() {
+		while (this.isLocked()) {
+		}
+		
+		running.set(false);
 	}
 }

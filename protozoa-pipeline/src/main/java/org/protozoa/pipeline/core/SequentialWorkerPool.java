@@ -3,16 +3,16 @@ package org.protozoa.pipeline.core;
 public class SequentialWorkerPool implements WorkerPool {
 
 	@Override
-	public void setSize(int _size) {
+	public void start(int _size) {
 	}
 
 	@Override
 	public void submitWork(PipelineNode _node, DataUnit[] _data) {
-		new Worker(_node, _data).run();
+		_node.consume(_data);
 	}
 
 	@Override
-	public void join(long _timeout) {
+	public void shutdown(long _timeout) {
 	}
 
 }

@@ -6,54 +6,58 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CustomWorkerPool implements WorkerPool, Runnable {
-	public static final int QUEUEING_RATIO = 1000;
+	public static final int DEFAULT_QUEUE_SIZE = 1000;
 	public static final int JOIN_INTERVAL = 5;
 
-	private ArrayList<WorkerWrapper> wrapperPool;
-	private Queue<Worker> workerQueue;
+	private ArrayList<Worker> workerPool;
+	private Queue<WorkUnit> workUnitQueue;
 
 	private AtomicBoolean running = new AtomicBoolean(false);
+	private AtomicBoolean shuttingDown = new AtomicBoolean(false);
+
 	private Thread poolThread;
+	private int queueSize;
 
-	private int id = 0;
-
-	public CustomWorkerPool() {
-		this(QUEUEING_RATIO);
-	}
-
-	public CustomWorkerPool(int _size) {
-		workerQueue = new ArrayBlockingQueue<Worker>(_size);
+	public CustomWorkerPool(int _queueSize) {
+		if (_queueSize < 1) {
+			_queueSize = DEFAULT_QUEUE_SIZE;
+		}
+		
+		queueSize = _queueSize;
 	}
 
 	@Override
-	public void setSize(int _size) {
-		wrapperPool = new ArrayList<WorkerWrapper>(_size);
+	public void start(int _size) {
+		workUnitQueue = new ArrayBlockingQueue<WorkUnit>(queueSize);
+
+		workerPool = new ArrayList<Worker>(_size);
 
 		for (int i = 0; i < _size; i++) {
-			wrapperPool.add(new WorkerWrapper());
+			Worker _worker = new Worker();
+			workerPool.add(_worker);
+
+			new Thread(_worker).start();
 		}
+
+		running.set(true);
+
+		poolThread = new Thread(this);
+		poolThread.start();
 	}
 
 	@Override
 	public void submitWork(PipelineNode _node, DataUnit[] _data) {
-		if (wrapperPool == null) {
+		if (shuttingDown.get() || workerPool == null) {
 			return;
 		}
 
-		if (!running.get()) {
-			running.set(true);
-
-			poolThread = new Thread(this);
-			poolThread.start();
-		}
-
-		Worker _worker = new Worker(_node, _data);
+		WorkUnit _workUnit = new WorkUnit(_node, _data);
 
 		boolean _bSuccess = false;
 
 		while (!_bSuccess) {
 			try {
-				workerQueue.add(_worker);
+				workUnitQueue.add(_workUnit);
 				_bSuccess = true;
 			} catch (IllegalStateException _exception) {
 				// queue full
@@ -61,22 +65,24 @@ public class CustomWorkerPool implements WorkerPool, Runnable {
 		}
 	}
 
-	private WorkerWrapper findAvailableWrapper() {
-		WorkerWrapper _wrapper = null;
+	private Worker findAvailableWorker() {
+		Worker _worker = null;
 
-		for (WorkerWrapper _item : wrapperPool) {
+		for (Worker _item : workerPool) {
 			if (_item.lock()) {
-				_wrapper = _item;
+				_worker = _item;
 				break;
 			}
 		}
 
-		return _wrapper;
+		return _worker;
 	}
 
 	@Override
-	public void join(long _timeout) {
-		while (!workerQueue.isEmpty()) {
+	public void shutdown(long _timeout) {
+		shuttingDown.set(true);
+
+		while (!workUnitQueue.isEmpty()) {
 			try {
 				Thread.sleep(JOIN_INTERVAL);
 			} catch (InterruptedException e) {
@@ -84,14 +90,9 @@ public class CustomWorkerPool implements WorkerPool, Runnable {
 				e.printStackTrace();
 			}
 		}
-		
-		while (this.busyWrapperCount() > 0) {
-			try {
-				Thread.sleep(JOIN_INTERVAL);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+
+		for (Worker _worker : workerPool) {
+			_worker.shutdown();
 		}
 
 		running.set(false);
@@ -100,7 +101,7 @@ public class CustomWorkerPool implements WorkerPool, Runnable {
 	private int busyWrapperCount() {
 		int _count = 0;
 
-		for (WorkerWrapper _item : wrapperPool) {
+		for (Worker _item : workerPool) {
 			if (_item.isLocked()) {
 				_count++;
 			}
@@ -112,16 +113,17 @@ public class CustomWorkerPool implements WorkerPool, Runnable {
 	@Override
 	public void run() {
 		while (running.get()) {
-			Worker _worker = workerQueue.peek();
+			WorkUnit _workUnit = workUnitQueue.peek();
 
-			if (_worker != null) {
-				WorkerWrapper _wrapper = this.findAvailableWrapper();
+			if (_workUnit != null) {
+				Worker _worker = this.findAvailableWorker();
 
-				if (_wrapper != null) {
-					workerQueue.remove(_worker);
-					_wrapper.execute(_worker);
+				if (_worker != null) {
+					workUnitQueue.remove(_workUnit);
+					_worker.process(_workUnit);
 				}
 			}
+
 			try {
 				Thread.sleep(5);
 			} catch (InterruptedException e) {

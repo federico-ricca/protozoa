@@ -2,14 +2,15 @@ package org.protozoa.pipeline.core;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
 public class BasicUseCases {
-	private static final int DATA_UNIT_COUNT = 2000;
+	private static final int DATA_UNIT_COUNT = 20;
+
+	private AtomicInteger counter = new AtomicInteger(0);
 
 	class SimpleDataUnit implements DataUnit {
 		String id;
@@ -119,15 +120,14 @@ public class BasicUseCases {
 
 			@Override
 			public DataUnit[] process(DataUnit[] _source) {
-				System.out.println("data size=" + _source.length);
 				for (int i = 0; i < _source.length; i++) {
-					System.out.print(".");
 					try {
-						Thread.sleep(20);
+						Thread.sleep(10);
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
+					counter.incrementAndGet();
 				}
 
 				return null;
@@ -142,22 +142,27 @@ public class BasicUseCases {
 		PipelineNode _filter5 = new PipelineNode(_p);
 
 		_pipeline.addNode(_filter1);
-		/*_pipeline.addNode(_filter2);
-				_pipeline.addNode(_filter3);
+		_pipeline.addNode(_filter2);
+		_pipeline.addNode(_filter3);
 		_pipeline.addNode(_filter4);
 		_pipeline.addNode(_filter5);
-*/
+
 		long _start = System.currentTimeMillis();
 		_pipeline.start();
-		//_pipeline.run();
-		
+
 		try {
-			_pipeline.join(500);
+			_pipeline.shutdown(500);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+		long _elapsed = System.currentTimeMillis() - _start;
+
+		System.out.println("elapsed = " + _elapsed);
+		System.out.println("mean time = "
+				+ (_elapsed / (DATA_UNIT_COUNT)));
 		
-		System.out.println("elapsed = " + (System.currentTimeMillis() - _start));
+		assertEquals(DATA_UNIT_COUNT * DATA_UNIT_COUNT, counter.get());
 	}
 }
