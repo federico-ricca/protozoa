@@ -9,11 +9,10 @@
 	<artifactId>protozoa</artifactId>
 	<version>v0.1-alpha</version>
 	<packaging>pom</packaging>
-	<description>Protozoa toolset for software prototyping</description>
+	<description>Protozoa: a toolset for software prototyping</description>
 
 	<modules>
         <module>protozoa-config</module>
-        
         <module>protozoa-pipeline</module>
         <module>protozoa-metrics</module>
 	</modules>

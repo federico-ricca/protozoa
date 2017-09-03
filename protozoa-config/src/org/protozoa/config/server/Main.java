@@ -22,6 +22,9 @@ import org.protozoa.config.ConfigurationException;
 import org.protozoa.config.ConfigurationLoader;
 import org.protozoa.config.ConfigurationServer;
 
+/**
+ * A simple configuration server
+ */
 public class Main {
 	private final int iPort = 9595;
 
