@@ -1,5 +1,8 @@
-# protozoa
-Protozoa - A toolset for software prototyping
+# Protozoa
+A toolset for software prototyping
 
-## Description
-Protozoa is a set of tools for rapidly prototyping applications.
+Consists of:
+* config: a simple abstraction for local/remote configuration
+* metrics: a simple metrics-based timer
+* pipepline: an abstraction for building data pipelines
+
